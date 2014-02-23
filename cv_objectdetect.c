@@ -5,30 +5,50 @@
 CvHaarClassifierCascade *cascade;
 CvMemStorage            *storage;
 
-void detect( IplImage *img );
+void detect(IplImage *img) {
+    int i;
+    CvSeq *object = cvHaarDetectObjects(
+            img,
+            cascade,
+            storage,
+            1.5,				// Scale factor
+            2,					// Minimum neighbours
+            1,					// CV_HAAR_DO_CANNY_PRUNING
+            cvSize( 30,30),		// Minsize
+            cvSize(640,480) );	// Maxsize
 
-int main( int argc, char** argv )
-{
+    for(i = 0; i < (object? object->total : 0); i++) {
+        CvRect *r = ( CvRect* )cvGetSeqElem( object, i );
+        cvRectangle( img,
+			cvPoint( r->x, r->y ),
+			cvPoint( r->x + r->width, r->y + r->height ),
+			CV_RGB( 255, 0, 0 ), 2, 8, 0 );
+                
+        //printf("%d,%d\nnumber =%d\n",r->x,r->y,object->total);
+    }
+
+    cvShowImage( "video", img );
+}
+int main(int argc, char **argv) {
     CvCapture *capture;
     IplImage  *frame;
     int       key;
-    char      *filename = "bottle.xml"; //put the name of your classifier here
+    char      *filename = "usb.xml"; // Change to the name of classifier
 
-    cascade = ( CvHaarClassifierCascade* )cvLoad( filename, 0, 0, 0 );
+    cascade = (CvHaarClassifierCascade *) cvLoad(filename, 0, 0, 0);
     storage = cvCreateMemStorage(0);
     capture = cvCaptureFromCAM(0);
 
-    assert( cascade && storage && capture );
+    // Check
+    // assert(cascade && storage && capture);
 
     cvNamedWindow("video", 1);
 
     while(1) {
-        frame = cvQueryFrame( capture );
-
+        frame = cvQueryFrame(capture);
         detect(frame);
-
         key = cvWaitKey(50);
-        }
+    }
 
     cvReleaseImage(&frame);
     cvReleaseCapture(&capture);
@@ -37,35 +57,4 @@ int main( int argc, char** argv )
     cvReleaseMemStorage(&storage);
 
     return 0;
-}
-
-void detect(IplImage *img)
-{
-    int i;
-
-    CvSeq *object = cvHaarDetectObjects(
-            img,
-            cascade,
-            storage,
-            1.5, //-------------------SCALE FACTOR
-            2,//------------------MIN NEIGHBOURS
-            1,//----------------------
-                      // CV_HAAR_DO_CANNY_PRUNING,
-            cvSize( 30,30), // ------MINSIZE
-            cvSize(640,480) );//---------MAXSIZE
-
-    for( i = 0 ; i < ( object ? object->total : 0 ) ; i++ ) 
-        {
-            CvRect *r = ( CvRect* )cvGetSeqElem( object, i );
-            cvRectangle( img,
-                     cvPoint( r->x, r->y ),
-                     cvPoint( r->x + r->width, r->y + r->height ),
-                     CV_RGB( 255, 0, 0 ), 2, 8, 0 );
-                    
-            //printf("%d,%d\nnumber =%d\n",r->x,r->y,object->total);
-
-
-        }
-
-    cvShowImage( "video", img );
 }
